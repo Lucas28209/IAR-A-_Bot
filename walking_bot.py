@@ -1,7 +1,7 @@
-   
+# -*- coding: utf-8 -*-  
 from cProfile import run
 import threading
-from matplotlib.pyplot import grid
+#from matplotlib.pyplot import grid
 import numpy as np
 import time
 import pygame as pg
@@ -12,8 +12,37 @@ import math
 ''''''
 class Ambiente():
     def __init__(self, diretorio, diretorio2):
-        self.dados = np.loadtxt(diretorio) #leitura dos dados
-        self.locais = np.loadtxt(diretorio2)    
+        self.dados = np.loadtxt(diretorio) #leitura do ambiente
+        self.locais = np.loadtxt(diretorio2) #leitura das posições das fábricas e robô  
+        
+        self.itens = [20,10,8,6,4] #itens
+        
+        a, b = int(self.locais[0,0]), int(self.locais[0,1]) #robo
+        
+        self.dados [a,b] = 107 #robo
+        self.dados [int(self.locais[1,0]), int(self.locais[1,1]) ] = 110 #fábrica 1
+        self.dados [int(self.locais[2,0]), int(self.locais[2,1]) ] = 120 #fábrica 2
+        self.dados [int(self.locais[3,0]), int(self.locais[3,1]) ] = 230 #fábrica 3
+        self.dados [int(self.locais[4,0]), int(self.locais[4,1]) ] = 140 #fábrica 4
+        
+        
+        for i in range (len(self.itens)):
+        	j=0
+        	while j < self.itens[i]:
+        #		print(j, i)
+        		a = np.random.randint(0,high=42)
+        		b = np.random.randint(0,high=42)
+        		if (self.dados[a,b] == 0):
+        			self.dados[a,b] = self.itens[i]*25
+        			j=j+1	
+
+        #se pegar, colocar custo 1(verde) 
+	#criar classe robô
+	#fazer o raio
+	#fazer inicio da movimentação
+	    
+    
+    
     '''
     def le_dados(self):       
         #print (self.dados)
@@ -181,7 +210,7 @@ class AntProgram():
         self.ambiente = ambiente
         self.locais = locais
         #print(self.locais)
-        self.tam = 600
+        self.tam = 900
         self.run()
 
         # self.raio_visao = raio_visao
@@ -234,10 +263,9 @@ class AntProgram():
 
     def matriz(self):
         ret = np.zeros((self.size, self.size))
-        a, b = int(self.locais[0,0]), int(self.locais[0,1])
-        #print(type(a),type(b))
+        #a, b = int(self.locais[0,0]), int(self.locais[0,1]) #robo
         
-        
+        #faz a coloração do ambiente
         for i in range(self.size):
             for j in range(self.size):
                 #print("oi")
@@ -249,18 +277,17 @@ class AntProgram():
                 elif self.ambiente[i,j] == 3:
                     ret[i,j] =  80#self.orange 
                 elif self.ambiente[i,j] == 0:
-                    ret[i,j] = 25#self.green                      
-        ret [a,b] = 100 #robo
-        ret [int(self.locais[1,0]), int(self.locais[1,1]) ] = 110 #fábrica 1
-        ret [int(self.locais[2,0]), int(self.locais[2,1]) ] = 120 #fábrica 2
-        ret [int(self.locais[3,0]), int(self.locais[3,1]) ] = 230 #fábrica 3
-        ret [int(self.locais[4,0]), int(self.locais[4,1]) ] = 140 #fábrica 4
+                    ret[i,j] = 25#self.green                   
+                else:
+                    ret[i,j] = self.ambiente[i,j]                                     
+        
+        
         return ret
         
 
     def run(self):
         pg.init()
-        tela = pg.display.set_mode((600, 600))
+        tela = pg.display.set_mode((900, 900))
         tela.set_alpha(None)
         #print(np.count_nonzero(self.grid != None))
         t = threading.Thread(target=self.inicio)
