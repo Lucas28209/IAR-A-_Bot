@@ -27,41 +27,38 @@ class Ambiente():
         
         
         for i in range (len(self.itens)):
-        	j=0
-        	while j < self.itens[i]:
-        #		print(j, i)
-        		a = np.random.randint(0,high=42)
-        		b = np.random.randint(0,high=42)
-        		if (self.dados[a,b] == 0):
-        			self.dados[a,b] = self.itens[i]*25
-        			j=j+1	
+            j=0
+            while j < self.itens[i]:
+                a = np.random.randint(0,high=42)
+                b = np.random.randint(0,high=42)
+                if (self.dados[a,b] == 0):
+                    self.dados[a,b] = self.itens[i]*25
+                    j=j+1	
 
         #se pegar, colocar custo 1(verde) 
 	#criar classe robô
 	#fazer o raio
 	#fazer inicio da movimentação
-	    
-    
-    
-    '''
-    def le_dados(self):       
-        #print (self.dados)
-        dados_labels = list()
-        for i in self.dados:
-            dados2 = i[0:-1], i[-1]*22    	    
-            self.dados_labels.append(dados2)
-    		#labels.append(label) 
-    	    #print(dados_labels)
-        #print(len(dados_labels))
-        #return dados_labels, self.qnt_dados 
-    
-    def calcula_alpha(self):
-        somatorio = 0
-        for d1 in self.dados:
-            for d2 in self.dados:
-                somatorio += euclidean(d1[0:-1], d2[0:-1])
-        return somatorio/((self.qntd_dados)**2)
-    '''
+
+class Robo():
+    def __init__(self,coordenadas):
+        self.raio = 4
+        self.coordenadas = coordenadas
+
+    def andar():
+        pass
+
+    def calculos():
+        pass
+
+    def pegar():
+        pass
+
+    def largar():
+        pass
+
+
+        pass
 
 class Formiga():
     def __init__(self, x,y,raio_visao, grid,its,alpha, n_dados):
