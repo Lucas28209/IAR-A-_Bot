@@ -3,7 +3,7 @@ import numpy as np
 import pygame as pg
 import sys, time
 
-from sklearn.cluster import cluster_optics_dbscan
+
 
 class Ambiente():
     def __init__(self):
@@ -56,6 +56,7 @@ class Robo():
     def __init__(self,raio, grid,coord,custos):
         self.grid = grid #ambiente
         self.raio = raio   
+        self.r_ = 9#self._calc_r_()
         self.coord_atual = [coord[0],coord[1]]
         self.custos = custos
 
@@ -68,12 +69,21 @@ class Robo():
         self.last_coord = [self.coord_atual[0],self.coord_atual[1]] #[x,y]
         self.last_color = self.grid[self.last_coord[0],self.last_coord[1]] #25
         
-        self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 
+        self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #robo
         
-        
+    def neighbors(self,radius, row_number, column_number):
+        a = self.grid
+        return [[a[i][j] if  i >= 0 and i < len(a) and j >= 0 and j < len(a[0]) else 0
+                for j in range(column_number-1-radius, column_number+radius)]
+                    for i in range(row_number-1-radius, row_number+radius)]
 
-    def vizinhos(self):
-        pass
+    def vizinhos(self, vet, x,y):
+        n = self.r_
+        #print(n)
+        vet = np.roll(np.roll(vet, shift=-x+1, axis=0), shift=-y+1, axis=1)
+
+        #print('\n', (vet[:n,:n]))
+        return vet[:9,:9]
 
     def run(self):
         self.andar()
@@ -82,8 +92,20 @@ class Robo():
     def andar(self):
         grid = self.grid
         
+        
+        #vet = self.vizinhos(self.grid, self.coord_atual[0],self.coord_atual[1])
+        #print(vet)
+        
+        
+        #print(self.neighbors(1,self.coord_atual[0],self.coord_atual[1]))
         self.grid[self.coord_atual[0],self.coord_atual[1]] = self.last_color #volta a cor originial
         
+        vet = (self.neighbors(4,self.coord_atual[0],self.coord_atual[1]))
+        for a in vet:
+            for i in a:
+                if ((i == 20) or (i==10)  or (i==8 ) or (i==6) or (i==4)):
+                    print("oi")
+        #tres células de deslocamento se era o [5,5], passou a ser o [2,2]
         self.coord_atual[0] = self.coord_atual[0]+1
         self.coord_atual[1] = self.coord_atual[1]
                
@@ -93,10 +115,13 @@ class Robo():
             self.last_color = 25
 
         self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
-
+      
         #print(self.custos[self.coord_atual[0],self.coord_atual[1]])
         
         return 
+
+    def a_star(self):
+        pass
         
     def is_item(self, item):
         if (item==20):
@@ -123,6 +148,11 @@ class Robo():
 
     def pegar(self):
         pass
+
+    def _calc_r_(self):
+        self.r_ = 1
+        for i in range(self.raio):
+            self.r_ = self.r_ + 2
 
  
 class Acao():
