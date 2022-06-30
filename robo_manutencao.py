@@ -53,12 +53,13 @@ class Ambiente():
                     i=i+1
 
 class Robo():
-    def __init__(self,raio, grid,coord,custos):
+    def __init__(self,raio, grid,coord,custos,locais):
         self.grid = grid #ambiente
         self.raio = raio   
         self.r_ = 9#self._calc_r_()
         self.coord_atual = [coord[0],coord[1]]
         self.custos = custos
+	self.fabricas = locais
 
         self.baterias = 0
         self.solda = 0
@@ -87,11 +88,12 @@ class Robo():
 
     def run(self):
         self.andar()
-        return self.grid
-    
+        return self.grid    
+
     def andar(self):
         grid = self.grid
         
+	self.dist_manhattan(self.coord_atual[0],self.coord_atual[1])
         
         #vet = self.vizinhos(self.grid, self.coord_atual[0],self.coord_atual[1])
         #print(vet)
@@ -119,6 +121,13 @@ class Robo():
         #print(self.custos[self.coord_atual[0],self.coord_atual[1]])
         
         return 
+
+    def dist_manhattan(self,x,y):
+	for i in range(len(self.locais)):	
+		x,y = self.locais[i]
+		print(f'distancia para fábrica {i}', (abs(self.coord_atual[0] - x) + abs(self.coord_atual[1] - y)) )
+	#return abs( 		
+	#pass
 
     def a_star(self):
         pass
@@ -160,6 +169,7 @@ class Acao():
         self.size = 42
         self.raio = raio
         self.ambiente = ambiente
+	self.locais = [int(locais[1:])]
         self.coord = [int(coord[0,0]),int(coord[0,1])]
         self.custos = custos
         self.sleep = sleep
@@ -169,7 +179,7 @@ class Acao():
         #print(self.ambiente)
 
         #self.distribui(self.ambiente, self.pecas)
-        self.cria_robo(self.raio, self.ambiente,self.coord,self.custos)
+        self.cria_robo(self.raio, self.ambiente,self.coord,self.custos,self.locais)
 
        
     
@@ -177,8 +187,8 @@ class Acao():
         #solta as peças no ambiente
         pass
 
-    def cria_robo(self,raio,ambiente,coord,custos):
-        robo = Robo(raio, ambiente,coord,custos)
+    def cria_robo(self,raio,ambiente,coord,custos,locais):
+        robo = Robo(raio, ambiente,coord,custos,locais)
         self.lista.append(robo)
     
     def inicio(self):
