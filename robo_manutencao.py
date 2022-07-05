@@ -1,4 +1,3 @@
-import threading
 import numpy as np
 import pygame as pg
 import sys, time
@@ -73,7 +72,7 @@ class Node():
         self.parent = parent
         self.position = position
         self.x , self.y = position
-        #print(self.x, self.y)
+
         self.custo = cost[int(self.x)][int(self.y)]
 
         self.g = 0
@@ -99,15 +98,11 @@ class Mostra():
               
 
     def run(self):
-            #print('oi')
-            time.sleep(0.1) 
+            
+            #time.sleep(0.01) 
             pg.init()
             tela = pg.display.set_mode((900, 900))
             tela.set_alpha(None)
-            #print(np.count_nonzero(self.grid != None))
-            #t = threading.Thread(target=self.inicio)
-            #t.daemon=True
-            #t.start()
 
             #while True:
             for e in pg.event.get():
@@ -132,6 +127,8 @@ class Robo():
         self.coord_atual = [coord[0],coord[1]]
         self.custos = custos
         self.fabricas = locais
+        self.custo_total = 0
+        self.expansion = 0 
 
         self.baterias = 0
         self.solda = 0
@@ -145,6 +142,8 @@ class Robo():
         self.fab_cald = [340, self.fabricas[3], 5, False]
         self.fab_aco = [350, self.fabricas[4], 2, False]
         
+        self.lista = [self.fab_grao, self.fab_casco,self.fab_pet, self.fab_cald,self.fab_aco]
+        self.aux = False
 
         self.last_coord = [self.coord_atual[0],self.coord_atual[1]] #[x,y]
         self.last_color = self.grid[self.last_coord[0],self.last_coord[1]] #25
@@ -165,41 +164,39 @@ class Robo():
     #     #print('\n', (vet[:n,:n]))
     #     return vet[:9,:9]
     #This function return the path of the search
-    def return_path(self,current_node,maze):
+    def return_path(self,current_node,maze, soma):
         path = []
-        no_rows, no_columns = np.shape(maze)
-        # here we create the initialized result maze with -1 in every position
-        result = self.grid.copy() #[[-1 for i in range(no_columns)] for j in range(no_rows)]
+        
+        
+        result = self.grid.copy() 
         current = current_node
         while current is not None:
             path.append(current.position)
             current = current.parent
         # Return reversed path as we need to show from start to end path
         path = path[::-1]
-        start_value = 0
+        #start_value = 0
         # we update the path of start to end found by A-star serch with every step incremented by 1
+        custo_atual = 0
         for i in range(len(path)):
             result[path[i][0]][path[i][1]] = 1#start_value
-            #start_value += 1
+            if (soma==True):
+                custo_atual += self.custos[path[i][0]][path[i][1]]
+                #print('custo atual', custo_atual)
+                self.custo_total += custo_atual#self.custos[path[i][0]][path[i][1]]
+                #self.custo_total = self.custo_total + start_value
+        
         mostra = Mostra(result)
         mostra.run()
         return result
 
 
     def search(self,maze, cost, start, end):
-        """
-            Returns a list of tuples as a path from the given start to the given end in the given maze
-            :param maze:
-            :param cost
-            :param start:
-            :param end:
-            :return:
-        """
 
         # Create start and end node with initized values for g, h and f
-        start_node = Node(None, tuple(start),cost)
+        start_node = Node(None, tuple(start),self.custos)
         start_node.g = start_node.h = start_node.f = 0
-        end_node = Node(None, tuple(end),cost)
+        end_node = Node(None, tuple(end),self.custos)
         end_node.g = end_node.h = end_node.f = 0
 
         # Initialize both yet_to_visit and visited list
@@ -226,23 +223,7 @@ class Robo():
                 [ 0, 1 ]] # go right
 
 
-        """
-            1) We first get the current node by comparing all f cost and selecting the lowest cost node for further expansion
-            2) Check max iteration reached or not . Set a message and stop execution
-            3) Remove the selected node from yet_to_visit list and add this node to visited list
-            4) Perofmr Goal test and return the path else perform below steps
-            5) For selected node find out all children (use move to find children)
-                a) get the current postion for the selected node (this becomes parent node for the children)
-                b) check if a valid position exist (boundary will make few nodes invalid)
-                c) if any node is a wall then ignore that
-                d) add to valid children node list for the selected parent
-                
-                For all the children node
-                    a) if child in visited list then ignore it and try next node
-                    b) calculate child node g, h and f values
-                    c) if child in yet_to_visit list then ignore it
-                    d) else move the child to yet_to_visit list
-        """
+        
         #find maze has got how many rows and columns 
         no_rows, no_columns = np.shape(maze)
         
@@ -252,7 +233,7 @@ class Robo():
             
             # Every time any node is referred from yet_to_visit list, counter of limit operation incremented
             outer_iterations += 1    
-
+            self.expansion += outer_iterations
             
             # Get the current node
             current_node = yet_to_visit_list[0]
@@ -276,11 +257,12 @@ class Robo():
             visited_list.append(current_node)
             #print(visited_list)
             # test if goal is reached or not, if yes then return the path
+            #self.return_path(current_node, maze,False)
             if current_node == end_node:
                 #print(current_node.c)
-                return self.return_path(current_node,maze)
-            else:
-                self.return_path(current_node, maze)
+                return self.return_path(current_node,maze,True)
+            #else:
+                
 
             # Generate children from all adjacent squares
             children = []
@@ -318,9 +300,9 @@ class Robo():
                 #print(current_cost)
                 child.g = current_node.g + current_cost
                 child.c = child.c + current_cost 
+                #print(child.c)
                 ## Heuristic costs calculated here, this is using eucledian distance
-                child.h = (((child.position[0] - end_node.position[0]) ** 2) + 
-                        ((child.position[1] - end_node.position[1]) ** 2)) 
+                child.h = ( abs(child.position[0] - end_node.position[0]) + abs(child.position[1] - end_node.position[1])) 
 
                 child.f = 1*child.g + 1*child.h
 
@@ -336,12 +318,6 @@ class Robo():
         return self.grid    
 
     def andar(self):
-        #grid = self.grid
-        self.dist_manhattan(self.coord_atual[0],self.coord_atual[1])
-        
-        #vet = self.vizinhos(self.grid, self.coord_atual[0],self.coord_atual[1])
-        #print(vet)
-        
         
         #print(self.neighbors(1,self.coord_atual[0],self.coord_atual[1]))
         self.grid[self.coord_atual[0],self.coord_atual[1]] = self.last_color #volta a cor originial
@@ -353,23 +329,16 @@ class Robo():
                 #print('\n',a)            
                 for i in a:                
                     if (i): #print(i)     
-                        #print('\n',i)  
-                        if ((i[0] == 310) and (self.fab_grao[2] <= self.baterias) and self.fab_grao[3] == False ):
+                        #print('\n',i) 
+                        if ((i[0] == 350 ) and (self.fab_aco[2] <= self.pneu) and self.fab_aco[3] == False):
                             self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
                             self.coord_atual[0] = i[1][0]
                             self.coord_atual[1] = i[1][1]
-                            self.baterias = self.fab_grao[2] - self.baterias
-                            print("chegou na fábrica grao... itens restantes = ", self.baterias)
-                            self.fab_grao[3] = True
-
-                        elif ((i[0] == 320 ) and (self.fab_casco[2] <= self.solda) and self.fab_casco[3] == False):
-                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
-                            self.coord_atual[0] = i[1][0]
-                            self.coord_atual[1] = i[1][1]
-                            self.solda = self.fab_casco[2] - self.solda
-                            print("chegou na fábrica casco... itens restantes = ", self.solda)
-                            self.fab_casco[3] = True
-
+                            self.pneu = self.fab_aco[2] - self.pneu
+                            print("chegou na fábrica aco... itens restantes = ", self.pneu) 
+                            self.fab_aco[3] = True  
+                            return 
+                        
                         elif ((i[0] == 330 ) and (self.fab_pet[2] <= self.sucçao) and self.fab_pet[3] == False):
                             self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
                             self.coord_atual[0] = i[1][0]
@@ -378,6 +347,16 @@ class Robo():
                             print("chegou na fábrica pet... itens restantes = ", self.sucçao)
                             self.fab_pet[3] = True
 
+
+                        elif ((i[0] == 320 ) and (self.fab_casco[2] <= self.solda) and self.fab_casco[3] == False):
+                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
+                            self.coord_atual[0] = i[1][0]
+                            self.coord_atual[1] = i[1][1]
+                            self.solda = self.fab_casco[2] - self.solda
+                            print("chegou na fábrica casco... itens restantes = ", self.solda)
+                            self.fab_casco[3] = True
+                            return
+
                         elif ((i[0] == 340 ) and (self.fab_cald[2] <= self.refri) and self.fab_cald[3] == False):
                             self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
                             self.coord_atual[0] = i[1][0]
@@ -385,34 +364,37 @@ class Robo():
                             self.refri = self.fab_cald[2] - self.refri
                             print("chegou na fábrica cald... itens restantes = ", self.refri)
                             self.fab_cald[3] = True
-                        
-                        elif ((i[0] == 350 ) and (self.fab_aco[2] <= self.pneu) and self.fab_aco[3] == False):
-                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
-                            self.coord_atual[0] = i[1][0]
-                            self.coord_atual[1] = i[1][1]
-                            self.pneu = self.fab_aco[2] - self.pneu
-                            print("chegou na fábrica aco... itens restantes = ", self.pneu) 
-                            self.fab_aco[3] = True   
-
-                        elif ((i[0] == 20) and (self.baterias < self.fab_grao[2]) and self.fab_grao[3] == False):
-                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
-                            self.coord_atual[0] = i[1][0]
-                            self.coord_atual[1] = i[1][1]
-                            self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
-                            if(self.is_item(20)):
-                                self.last_color = 25
-                            self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
-                            return                                                 
-                        elif ((i[0] == 10) and (self.solda < self.fab_casco[2]) and self.fab_casco[3] == False):
-                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
-                            self.coord_atual[0] = i[1][0]
-                            self.coord_atual[1] = i[1][1]
-                            self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
-                            if(self.is_item(10)):
-                                self.last_color = 25
-                            self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
                             return
-                            
+                        
+                        elif ((i[0] == 310) and (self.fab_grao[2] <= self.baterias) and self.fab_grao[3] == False ):
+                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
+                            self.coord_atual[0] = i[1][0]
+                            self.coord_atual[1] = i[1][1]
+                            self.baterias = self.fab_grao[2] - self.baterias
+                            print("chegou na fábrica grao... itens restantes = ", self.baterias)
+                            self.fab_grao[3] = True
+                            return
+ 
+
+                        elif ((i[0] == 4) and (self.pneu < self.fab_aco[2]) and self.fab_aco[3] == False):
+                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
+                            self.coord_atual[0] = i[1][0]
+                            self.coord_atual[1] = i[1][1]
+                            self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
+                            if(self.is_item(4)):
+                                self.last_color = 25
+                            self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
+                            return                                                           
+                                                          
+                        elif ((i[0] == 6) and (self.refri < self.fab_cald[2]) and self.fab_cald[3] == False):
+                            self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
+                            self.coord_atual[0] = i[1][0]
+                            self.coord_atual[1] = i[1][1]
+                            self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
+                            if(self.is_item(6)):
+                                self.last_color = 25
+                            self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
+                            return                            
                         elif ((i[0] == 8) and (self.sucçao < self.fab_pet[2]) and self.fab_pet[3] == False):
                             self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
                             self.coord_atual[0] = i[1][0]
@@ -422,81 +404,144 @@ class Robo():
                                 self.last_color = 25
                             self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
                             return
-                            
-                        elif ((i[0] == 6) and (self.refri < self.fab_cald[2]) and self.fab_cald[3] == False):
+                        elif ((i[0] == 10) and (self.solda < self.fab_casco[2]) and self.fab_casco[3] == False):
                             self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
                             self.coord_atual[0] = i[1][0]
                             self.coord_atual[1] = i[1][1]
                             self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
-                            if(self.is_item(6)):
+                            if(self.is_item(10)):
                                 self.last_color = 25
                             self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
                             return
-                            
-                        elif ((i[0] == 4) and (self.pneu < self.fab_aco[2]) and self.fab_aco[3] == False):
+                        elif ((i[0] == 20) and (self.baterias < self.fab_grao[2]) and self.fab_grao[3] == False):
                             self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [i[1][0],i[1][1]])
                             self.coord_atual[0] = i[1][0]
                             self.coord_atual[1] = i[1][1]
                             self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
-                            if(self.is_item(4)):
+                            if(self.is_item(20)):
                                 self.last_color = 25
                             self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
                             return
-        # newx, newy = self.dist_manhattan(self.coord_atual[0],self.coord_atual[1])                
-        # self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [newx,newy])
-        # self.coord_atual[0] = int(newx)#self.fab_grao[1][0]
-        # self.coord_atual[1] = int(newy)#self.fab_grao[1][1]
-        #print(type(newx))
-                            
-        # if (self.coord_atual[0]+1) < 41:
-        self.coord_atual[0] = np.random.randint(0,42)#self.coord_atual[0]+1  #
-        self.coord_atual[1] = np.random.randint(0,42)#self.coord_atual[1] # 
-        # else:
-        #     self.coord_atual[1] = self.coord_atual[1]+1  #np.random.randint(0,42)
+                   
+        a = self.coord_atual[0]
+        b = self.coord_atual[1]
         
+        if (self.fab_aco[3] == False and self.fab_aco[2] <= self.pneu ):
+            if (self.coord_atual[0] - self.fab_aco[1][0] > 0 ):
+                a = self.coord_atual[0]-4
+            else:
+                a = self.coord_atual[0]+4
+            if (self.coord_atual[1] - self.fab_aco[1][1] > 0 ):
+                b = self.coord_atual[1]-4
+            else:
+                b = self.coord_atual[1]+4
+
+        elif (self.fab_pet[3] == False and self.fab_pet[2] <= self.sucçao ):
+            if (self.coord_atual[0] - self.fab_pet[1][0] > 0 ):
+                a = self.coord_atual[0]-4
+            else:
+                a = self.coord_atual[0]+4
+            if (self.coord_atual[1] - self.fab_pet[1][1] > 0 ):
+                b = self.coord_atual[1]-4
+            else:
+                b = self.coord_atual[1]+4
+        
+        elif (self.fab_casco[3] == False and self.fab_casco[2] <= self.solda ):
+            if (self.coord_atual[0] - self.fab_casco[1][0] > 0 ):
+                a = self.coord_atual[0]-4
+            else:
+                a = self.coord_atual[0]+4
+            if (self.coord_atual[1] - self.fab_casco[1][1] > 0 ):
+                b = self.coord_atual[1]-4
+            else:
+                b = self.coord_atual[1]+4    
+        
+        elif (self.fab_cald[3] == False and self.fab_cald[2] <= self.refri ):
+            if (self.coord_atual[0] - self.fab_cald[1][0] > 0 ):
+                a = self.coord_atual[0]-4
+            else:
+                a = self.coord_atual[0]+4
+            if (self.coord_atual[1] - self.fab_cald[1][1] > 0 ):
+                b = self.coord_atual[1]-4
+            else:
+                b = self.coord_atual[1]+4
+        
+        elif (self.fab_grao[3] == False and self.fab_grao[2] <= self.baterias ):
+            if (self.coord_atual[0] - self.fab_grao[1][0] > 0 ):
+                a = self.coord_atual[0]-4
+            else:
+                a = self.coord_atual[0]+4
+            if (self.coord_atual[1] - self.fab_grao[1][1] > 0 ):
+                b = self.coord_atual[1]-4
+            else:
+                b = self.coord_atual[1]+4 
+        
+        
+        else:
+            x = np.random.randint(4,38)            
+
+            if (self.coord_atual[0] != x): 
+                if (self.coord_atual[0] - x > 0 ):
+                    a = self.coord_atual[0]-4
+                else:
+                    a = self.coord_atual[0]+4
+                
+            elif (self.coord_atual[1] != x): 
+                if (self.coord_atual[1] - x > 0 ):
+                    b = self.coord_atual[1]-4
+                else:
+                    b = self.coord_atual[1]+4
+
+
+        self.search(self.grid, self.custos, [self.coord_atual[0], self.coord_atual[1]], [a,b])     
+        
+        self.coord_atual[0] = a
+        self.coord_atual[1] = b
 
         self.last_color = self.grid[self.coord_atual[0],self.coord_atual[1]]
         self.grid[self.coord_atual[0],self.coord_atual[1]] = 1000 #muda robo de lugar
-        #print(self.custos[self.coord_atual[0],self.coord_atual[1]])
+        
         return
 
-    def dist_manhattan(self,x,y):
-        ret = 1000
-        for i in range(len(self.fabricas)):
-            x,y = self.fabricas[i] #print(len(self.fabricas)) #
-            res = (abs(self.coord_atual[0] - x) + abs(self.coord_atual[1] - y))
-            if ret > res:
-                ret = res 
-                newx = x 
-                newy = y
-            #print('distancia = ',res)
-        return newx,newy
+    # def dist_manhattan(self,x,y):
+    #     ret = 1000
+    #     for i in range(len(self.fabricas)):
+    #         x,y = self.fabricas[i] #print(len(self.fabricas)) #
+    #         res = (abs(self.coord_atual[0] - x) + abs(self.coord_atual[1] - y))
+    #         if ret > res:
+    #             ret = res 
+    #             newx = x 
+    #             newy = y
+    #         #print('distancia = ',res)
+    #     return newx,newy
      
         
     def is_item(self, item):
         if (item==20):
             self.baterias=self.baterias+1
-            #print("pegou bateria - total:", self.baterias)
+            print("pegou bateria - total:", self.baterias)
             return True
         if (item==10): 
             self.solda=self.solda+1
-            #print("pegou solda - total:", self.solda)
+            print("pegou solda - total:", self.solda)
             return True
         if (item==8):
             self.sucçao=self.sucçao+1
-            #print("pegou sucçao - total:", self.sucçao)
+            print("pegou sucçao - total:", self.sucçao)
             return True
         if (item==6): 
             self.refri=self.refri+1
-            #print("pegou refri - total:", self.refri)
+            print("pegou refri - total:", self.refri)
             return True
         if (item==4):
             self.pneu=self.pneu+1
-            #print("pegou pneu - total:", self.pneu)
+            print("pegou pneu - total:", self.pneu)
             return True
             
     def verifica(self):
         if (self.fab_grao[3] and self.fab_casco[3] and self.fab_pet[3] and self.fab_cald[3] and self.fab_aco[3]):
+            print('custo = ',self.custo_total)
+            print('expansoes = ',self.expansion)
             return True
         else:
             return False
@@ -550,7 +595,7 @@ class Acao():
 
     def run(self):
             #print('oi')
-            time.sleep(0.05) 
+            #time.sleep(0.05) 
             pg.init()
             tela = pg.display.set_mode((900, 900))
             tela.set_alpha(None)
