@@ -1,0 +1,48 @@
+Primeira iteração:
+    A*-> custo = 250.409
+         expansões = 1.884.204
+    
+    Dijastra-> custo = 209.180
+               expansões = 114.474.044
+    
+    Busca Gulosa-> custo = 35.270
+                   expansões = 9.767 
+
+Segunda iteração:
+    A*-> custo =  676.679
+         expansoes =  4.268.730
+    
+    Dijastra-> custo =  106.814
+               expansoes =  27.719.031
+    
+    Busca Gulosa-> custo =  33.415
+                   expansoes =  12.197
+
+Terceira iteração:
+    A*-> custo =  54.399
+         expansoes =  491.256
+    
+    Dijastra-> custo =  7.717
+              expansoes =  29.205.556
+    
+    Busca Gulosa-> custo =  11.412
+                   expansoes =  3.249
+
+Quarta iteração:
+    A*-> custo =  35.737
+         expansoes =  359.545
+    
+    Dijastra-> custo =  14.009
+              expansoes =  20.432.522
+    
+    Busca Gulosa-> custo =  33.405
+                   expansoes =  6.309
+
+Quinta iteração:
+    A*-> 
+    
+    Dijastra-> 
+    
+    Busca Gulosa-> 
+
+                   

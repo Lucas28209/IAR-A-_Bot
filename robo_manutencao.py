@@ -49,12 +49,12 @@ class Ambiente():
         #         x = np.random.randint(0,42)
         #         y = np.random.randint(0,42)
         #         if self.ambiente[x,y] == 25:
-        #             f = open("aa.txt", "a")
+        #             f = open("aa4.txt", "a")
         #             f.write(f'{x} {y}\n')                    
         #             self.ambiente[x,y] = item
         #             i=i+1
         # f.close()
-        f = np.loadtxt('aa.txt')
+        f = np.loadtxt('aa4.txt')
         #print(f[0][1])
         j=0
         for item in self.itens:
@@ -299,7 +299,7 @@ class Robo():
                 # Create the f, g, and h values
                 #print(current_cost)
                 child.g = current_node.g + current_cost
-                child.c = child.c + current_cost 
+                #child.c = child.c + current_cost 
                 #print(child.c)
                 ## Heuristic costs calculated here, this is using eucledian distance
                 child.h = ( abs(child.position[0] - end_node.position[0]) + abs(child.position[1] - end_node.position[1])) 
